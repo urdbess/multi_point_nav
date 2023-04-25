@@ -1,0 +1,8 @@
+<launch>
+
+    <node name="send_poses_node" pkg="multi_point_nav" type="send_poses"  output="screen">
+        <param name="record_file" value="$(find multi_point_nav)/goal_poses.txt"/>
+        
+    </node>
+
+</launch>
