@@ -1,8 +1,5 @@
 <launch>
-
-    <node name="set_poses_node" pkg="multi_point_nav" type="set_poses"  output="screen">
-        <param name="record_file" value="$(find multi_point_nav)/goal_poses.txt"/>
-        
-    </node>
+    <param name="/record_file" value="$(find multi_point_nav)/goal_poses.txt"/>
+    <node name="set_poses_node" pkg="multi_point_nav" type="set_poses"  output="screen"/>
 
 </launch>

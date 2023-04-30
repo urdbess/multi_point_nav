@@ -4,15 +4,18 @@
 #include <boost/regex.hpp>
 #include <geometry_msgs/PoseStamped.h>
 #include <vector>
+#include <visualization_msgs/MarkerArray.h>
 #include <move_base_msgs/MoveBaseActionResult.h>
 
 std::ifstream infile;
 std::string record_file;
+visualization_msgs::MarkerArray marker_array_poses;
 std::vector<geometry_msgs::PoseStamped> goal_poses;
 int count = 0;
 int goal_poses_size;
 
 ros::Publisher goal_pub;
+ros::Publisher marker_array_pub;
 
 std::vector<std::string> my_split(std::string str, std::string s) {
         boost::regex reg(s.c_str());
@@ -78,25 +81,54 @@ void cb_status(move_base_msgs::MoveBaseActionResult msg){
     }
 }
 
+void load_marker_array(const std::vector<geometry_msgs::PoseStamped> &goal_poses){
+    int id_index = 0;
+    for(auto pose : goal_poses) {
+        visualization_msgs::Marker m;
+        m.header.frame_id = "map";
+        m.header.stamp = ros::Time();
+        m.ns = "my_namespace";
+        m.id = id_index;
+        m.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+        m.text = std::to_string(id_index++);
+        m.action = visualization_msgs::Marker::ADD;
+        m.scale.x = 0.5;
+        m.scale.y = 0.5;
+        m.scale.z = 0.5;
+        m.color.a = 1;
+        m.color.r = 1;
+        m.color.g = 0;
+        m.color.b = 0;
+        m.pose = pose.pose;
+
+        marker_array_poses.markers.push_back(m);
+    }
+}
+
 int main(int argc, char *argv[]) {
     ros::init(argc, argv, "send_poses_node");
     ros::NodeHandle n;
-    n.getParam("/send_poses_node/record_file", record_file);
+    n.getParam("/record_file", record_file);
     ros::Subscriber goal_status_sub = n.subscribe<move_base_msgs::MoveBaseActionResult>("/move_base/result", 1, cb_status);
+    marker_array_pub = n.advertise<visualization_msgs::MarkerArray>("/marker_array_poses", 10);
     goal_pub = n.advertise<geometry_msgs::PoseStamped>("/move_base_simple/goal", 10);
     //加载目标文件
     load_poses(record_file, goal_poses);
     goal_poses_size = goal_poses.size();
-    //发布第一个目标点
+    //加载markerArray
+    load_marker_array(goal_poses);
+    //等待一会，让pub准备就绪
+    ros::Rate r(0.75);
+    r.sleep();
+    
     geometry_msgs::PoseStamped pose;
     pose.header.frame_id = "map";
     pose.header.stamp = ros::Time::now();
     pose.pose= goal_poses[0].pose;
     ROS_INFO("heading to goal 0: (%f, %f)", pose.pose.position.x, pose.pose.position.y);
-    //等待1秒让pub准备就绪，否则第一个目标点发不出去
-    ros::Rate r(0.75);
-    r.sleep();
+    //发布第一个目标点和markerArray
     goal_pub.publish(pose);
+    marker_array_pub.publish(marker_array_poses);
     ros::spin();
     return 0;
 }
