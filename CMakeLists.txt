@@ -136,6 +136,7 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(set_poses src/set_poses.cpp)
 add_executable(send_poses src/send_poses.cpp)
+add_executable(test1 src/test1.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -153,6 +154,10 @@ target_link_libraries(set_poses
 )
 
 target_link_libraries(send_poses
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(test1
   ${catkin_LIBRARIES}
 )
 
